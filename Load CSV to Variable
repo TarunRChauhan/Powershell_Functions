@@ -1,0 +1,38 @@
+param (
+[parameter(Mandatory=$true)]
+[string] $str_CSV_Path,
+
+[parameter(Mandatory=$false)]
+[string] $str_Custom_Log_File_Name_Path,
+
+[switch] $swt_ConsoleMessage
+)
+
+$arr_CSV_Data = ""
+$str_Error_Message = ""
+$str_Default_Log_File_Name_Path = "$env:USERPROFILE\Desktop\"+($MyInvocation.MyCommand.Name).Replace(".ps1","_log.txt")
+
+if ($str_Custom_Log_File_Name_Path -ne "") {
+    $str_Default_Log_File_Name_Path = $str_Custom_Log_File_Name_Path
+}
+
+try {
+    $arr_CSV_Data = Import-Csv -Path $str_CSV_Path -ErrorAction Stop
+
+    if ($swt_ConsoleMessage) {
+        Write-Host "File: $str_CSV_Path | Import Successful" -ForegroundColor Green
+    }
+
+} catch {
+    $dt_Current_Date = Get-Date
+    $str_Error_Message = "$dt_Current_Date | Line# " + $Error[0].InvocationInfo.ScriptLineNumber + " | " + $Error[0].Exception.Message
+    $str_Error_Message | Add-Content -Path $str_Default_Log_File_Name_Path -Force
+    
+    if ($swt_ConsoleMessage) {
+        Write-Host $str_Error_Message -ForegroundColor Red
+    }
+
+    $arr_CSV_Data = $false
+}
+
+return $arr_CSV_Data
