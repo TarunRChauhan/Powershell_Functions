@@ -1,0 +1,36 @@
+param (
+[parameter(Mandatory=$true)]
+[string] $str_Shared_Folder_File_Path,
+
+[parameter(Mandatory=$false)]
+[string] $str_Custom_Log_File_Name_Path,
+
+[switch] $swt_ConsoleMessage
+)
+
+$ACL = New-Object System.Security.AccessControl.DirectorySecurity
+
+$str_Error_Message = ""
+$str_Default_Log_File_Name_Path = "$env:USERPROFILE\Desktop\"+($MyInvocation.MyCommand.Name).Replace(".ps1","_log.txt")
+
+if ($str_Custom_Log_File_Name_Path -ne "") {
+    $str_Default_Log_File_Name_Path = $str_Custom_Log_File_Name_Path
+}
+
+try {
+    $ACL = Get-Acl -Path $str_Shared_Folder_File_Path -ErrorAction Stop
+
+    if ($swt_ConsoleMessage) {
+        Write-Host $str_Shared_Folder_File_Path ": Access Control List Retreived Successful" -ForegroundColor Green
+    }
+} catch {
+    $dt_Current_Date = Get-Date
+    $str_Error_Message = "$dt_Current_Date | Line# " + $Error[0].InvocationInfo.ScriptLineNumber + " | " + $Error[0].Exception.Message
+    $str_Error_Message | Add-Content -Path $str_Default_Log_File_Name_Path -Force
+    $ACL = $false
+    if ($swt_ConsoleMessage) {
+        Write-Host $str_Error_Message -ForegroundColor Red
+    }
+}
+
+return $ACL
